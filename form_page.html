@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="form-section" class="section">
+        <!-- container -->
+        <div class="container">
+            <!-- row -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Complete Your Information</h2>
+                    <form>
+                        <input class="input" type="text" id="first-name" placeholder="Enter Your First Name" required>
+                        <input class="input" type="text" id="last-name" placeholder="Enter Your Last Name" required>
+                        <input class="input" type="text" id="address" placeholder="Enter Your Address" required>
+                        <input class="input" type="tel" id="phone" placeholder="Enter Your Phone Number" required>
+                        <input class="input" type="email" id="email" placeholder="Your Email" required>
+                        <button type="submit" class="submit-btn">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        window.onload = function() {
+            // Récupérer l'email passé dans l'URL
+            var urlParams = new URLSearchParams(window.location.search);
+            var email = urlParams.get('email');
+            
+            // Pré-remplir l'email dans le champ email
+            if (email) {
+                document.getElementById('email').value = email;
+            }
+        };
+    </script>
+    
+</body>
+</html>
