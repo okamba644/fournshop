@@ -200,7 +200,7 @@ if (isset($_SESSION['id'])) {
 			<?php
 			include("connexion_base.php");
 
-			$sql = "SELECT * FROM produits where categorie='IT & Multim' ORDER BY id DESC";
+			$sql = "SELECT * FROM produits where categorie='Backpack' ORDER BY id DESC";
 			$result = $mysqli->query($sql);
 
 			if ($result->num_rows > 0) {

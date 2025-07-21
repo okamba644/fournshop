@@ -1,11 +1,88 @@
 <?php
 include "connexion_base.php";
 session_start();
+$categories = [];
+$sql_cat = "SELECT DISTINCT categorie FROM produits ORDER BY categorie ASC";
+$result_cat = $mysqli->query($sql_cat);
+if ($result_cat->num_rows > 0) {
+    while ($row = $result_cat->fetch_assoc()) {
+        $categories[] = $row['categorie'];
+    }
+}
 
+// Récupérer min et max prix pour l'intervalle
+$sql_prix = "SELECT MIN(prix) as minPrix, MAX(prix) as maxPrix FROM produits";
+$res_prix = $mysqli->query($sql_prix);
+$minPrix = 0;
+$maxPrix = 1000;
+if ($res_prix && $row_prix = $res_prix->fetch_assoc()) {
+    $minPrix = floor($row_prix['minPrix']);
+    $maxPrix = ceil($row_prix['maxPrix']);
+}
+
+// Variables de filtrage et pagination
+$filtreCategories = isset($_GET['categories']) ? $_GET['categories'] : [];
+$filtrePrixMin = isset($_GET['prix_min']) ? floatval($_GET['prix_min']) : $minPrix;
+$filtrePrixMax = isset($_GET['prix_max']) ? floatval($_GET['prix_max']) : $maxPrix;
+
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$produitsParPage = 15;
+$offset = ($page - 1) * $produitsParPage;
+
+// Construction de la requête SQL avec filtres
+$whereClauses = [];
+$params = [];
+$types = "";
+
+if (!empty($filtreCategories)) {
+    // Préparer un IN (?, ?, ...) selon le nombre de catégories
+    $placeholders = implode(',', array_fill(0, count($filtreCategories), '?'));
+    $whereClauses[] = "categorie IN ($placeholders)";
+    foreach ($filtreCategories as $cat) {
+        $params[] = $cat;
+        $types .= "s";
+    }
+}
+
+$whereClauses[] = "prix BETWEEN ? AND ?";
+$params[] = $filtrePrixMin;
+$params[] = $filtrePrixMax;
+$types .= "dd";
+
+$whereSql = "";
+if (!empty($whereClauses)) {
+    $whereSql = "WHERE " . implode(" AND ", $whereClauses);
+}
+
+// Requête pour compter le total des produits filtrés
+$sqlCount = "SELECT COUNT(*) as total FROM produits $whereSql";
+$stmtCount = $mysqli->prepare($sqlCount);
+if ($types !== "") {
+    $stmtCount->bind_param($types, ...$params);
+}
+$stmtCount->execute();
+$resCount = $stmtCount->get_result();
+$totalProduits = 0;
+if ($resCount && $rowCount = $resCount->fetch_assoc()) {
+    $totalProduits = intval($rowCount['total']);
+}
+$totalPages = ceil($totalProduits / $produitsParPage);
+
+// Requête principale pour récupérer les produits filtrés et paginés
+$sql = "SELECT * FROM produits $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
+$stmt = $mysqli->prepare($sql);
+
+$paramsWithLimit = $params;
+$typesWithLimit = $types . "ii";
+$paramsWithLimit[] = $produitsParPage;
+$paramsWithLimit[] = $offset;
+
+$stmt->bind_param($typesWithLimit, ...$paramsWithLimit);
+$stmt->execute();
+$result = $stmt->get_result();
 
 
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -15,8 +92,9 @@ session_start();
 		 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
 		<title>Fournishop</title>
-
-	
+		<link rel="shortcut icon" href="img/finallogo.png" type="image/x-icon">
+		<script src="script.js"></script>
+		
 		<!-- Google font -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
 
@@ -96,10 +174,10 @@ session_start();
 						<!-- SEARCH BAR -->
 						<div class="col-md-6">
     <div class="header-search">
-        <form onsubmit="return false;">
+        <form action="search.php" method="post">
             <select class="input-select" id="category-select" onchange="redirectToPage()">
 				
-              <option value="store.php">All Categories</option>
+                <option value="store.php">All Categories</option>
 				<option value="store.php"><--Filter--></option>
                 <option value="Stationery.php">Stationery</option>
                 <option value="Writ_corr.php">Writ. & corr</option>
@@ -107,8 +185,11 @@ session_start();
                 <option value="It_Multi.php">IT & Multim</option>
                 <option value="math_geo.php">Math & Geo</option>
             </select>
-           <input class="input" placeholder="Search here" name="recherche">
+            <input class="input" placeholder="Search here" name="recherche">
             <button class="search-btn" name="search">Search</button>
+			
+
+
         </form>
     </div>
 </div>
@@ -156,11 +237,11 @@ $mysqli->close();
 								<!-- /Wishlist -->
 
 								<!-- Cart -->
-								<div class="dropdown">
-									<a class="dropdown-toggle" href="panier.php"  aria-expanded="true">
-										<i class="fa fa-shopping-cart"></i>
-										<span>Your Cart</span>
-										<div class="qty1"><?php
+							<div class="dropdown">
+    <a class="dropdown-toggle" href="panier.php" aria-expanded="true">
+        <i class="fa fa-shopping-cart"></i>
+        <span>Your Cart</span>
+        <div class="qty1"><?php
 										include "connexion_base.php";
 
 if (isset($_SESSION['id'])) {
@@ -176,12 +257,13 @@ if (isset($_SESSION['id'])) {
 } else {
     echo 0;
 }
-?>
+?></div>
+    </a>
 </div>
-									</a>
-									
 
-								
+							</a>
+									<div class="cart-dropdown">
+									
 							</div>
 						</div>
 						<!-- /ACCOUNT -->
@@ -194,14 +276,70 @@ if (isset($_SESSION['id'])) {
 		</header>
 		<!-- /HEADER -->
 
-        <div class="section">
+		<!-- BREADCRUMB -->
+		<div id="breadcrumb" class="section">
+			<!-- container -->
+			<div class="container">
+				<!-- row -->
+				<div class="row">
+					<div class="col-md-12">
+						<ul class="breadcrumb-tree">
+							<li><a href="#">Home</a></li>
+							<li><a href="#">All Categories</a></li>
+							<li><a href="#">Accessories</a></li>
+							<li class="active">Headphones (227,490 Results)</li>
+						</ul>
+					</div>
+				</div>
+				<!-- /row -->
+			</div>
+			<!-- /container -->
+		</div>
+		<!-- /BREADCRUMB -->
+
+		<!-- SECTION -->
+		<div class="section">
+			<!-- container -->
+			<div class="container">
+				<!-- row -->
+				<div class="row">
+					<!-- ASIDE -->
+					<div class="sidebar">
+    <h3>Filtrer par catégorie</h3>
+    <form method="GET" id="filterForm">
+        <div class="filter-group">
+            <?php foreach ($categories as $cat): ?>
+                <div>
+                    <input type="checkbox" name="categories[]" id="cat-<?php echo htmlspecialchars($cat); ?>"
+                        value="<?php echo htmlspecialchars($cat); ?>"
+                        <?php if(in_array($cat, $filtreCategories)) echo "checked"; ?>>
+                    <label for="cat-<?php echo htmlspecialchars($cat); ?>"><?php echo htmlspecialchars($cat); ?></label>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <h3>Filtrer par prix</h3>
+        <div class="filter-group">
+            <label for="prix_min">Prix min :</label><br>
+            <input type="number" name="prix_min" id="prix_min" value="<?php echo htmlspecialchars($filtrePrixMin); ?>" min="<?php echo $minPrix; ?>" max="<?php echo $maxPrix; ?>"><br><br>
+            <label for="prix_max">Prix max :</label><br>
+            <input type="number" name="prix_max" id="prix_max" value="<?php echo htmlspecialchars($filtrePrixMax); ?>" min="<?php echo $minPrix; ?>" max="<?php echo $maxPrix; ?>">
+        </div>
+
+        <button type="submit">Filtrer</button>
+    </form>
+</div>
+						
+						<!-- /aside Widget -->
+					</div>
+					<!-- /ASIDE -->
+
+					
+ <div class="section">
 	<div class="container">
 		<div class="row">
 			<?php
-			include("connexion_base.php");
 
-			$sql = "SELECT * FROM produits where categorie='IT & Multim' ORDER BY id DESC";
-			$result = $mysqli->query($sql);
 
 			if ($result->num_rows > 0) {
 				while ($row = $result->fetch_assoc()) {
@@ -275,6 +413,32 @@ if (isset($_SESSION['id'])) {
 </div>
 
 
+
+
+												<!-- /store products -->
+
+						<!-- store bottom filter -->
+						<div class="store-filter clearfix">
+							<span class="store-qty">Showing 20-100 products</span>
+							<ul class="store-pagination">
+								<li class="active">1</li>
+								<li><a href="#">2</a></li>
+								<li><a href="#">3</a></li>
+								<li><a href="#">4</a></li>
+								<li><a href="#"><i class="fa fa-angle-right"></i></a></li>
+							</ul>
+						</div>
+						<!-- /store bottom filter -->
+					</div>
+					<!-- /STORE -->
+				</div>
+				<!-- /row -->
+			</div>
+			<!-- /container -->
+		</div>
+		<!-- /SECTION -->
+
+		
 		<!-- FOOTER -->
 		<footer id="footer">
 			<!-- top footer -->
@@ -376,60 +540,4 @@ if (isset($_SESSION['id'])) {
 		<script src="js/main.js"></script>
 
 	</body>
-	<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const wishlistButtons = document.querySelectorAll('.add-to-wishlist');
-
-    wishlistButtons.forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault(); // empêche tout rechargement
-            const productId = this.getAttribute('data-product-id');
-
-            fetch('wishlist.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'product_id=' + encodeURIComponent(productId)
-            })
-            .then(response => response.text())
-            .then(result => {
-                if (result === 'success') {
-                    alert('Produit ajouté à votre wishlist !');
-                } else if (result === 'exists') {
-                    alert('Ce produit est déjà dans votre wishlist.');
-                } else if (result === 'non_connecte') {
-                    alert('Veuillez vous connecter pour ajouter à votre wishlist.');
-                } else {
-                    alert('Erreur lors de l\'ajout à la wishlist.');
-                }
-            })
-            .catch(error => {
-                console.error('Erreur Ajax :', error);
-                alert('Erreur de communication avec le serveur.');
-            });
-        });
-    });
-});
-</script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function () {
-    $('.ajout-panier-form').on('submit', function (e) {
-        e.preventDefault();
-
-        var form = $(this);
-        $.ajax({
-            type: 'POST',
-            url: 'ajout_panier.php',
-            data: form.serialize(),
-            success: function (response) {
-                // Affiche la réponse (alert JS depuis le PHP)
-                $('body').append(response);
-            }
-        });
-    });
-});
-</script>
-
 </html>

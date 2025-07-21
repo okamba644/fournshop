@@ -16,32 +16,9 @@ session_start();
 		 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
 		<title>Fournishop</title>
-<script>
-	function initWishCounter() {
-    let wishCounter = document.querySelector(".qty"); // Sélectionne le compteur
-
-    // Récupérer la valeur du compteur depuis localStorage (ou initialiser à 0)
-    let count = localStorage.getItem("wishlistCount") ? parseInt(localStorage.getItem("wishlistCount")) : 0;
-    
-    // Mettre à jour l'affichage
-    wishCounter.textContent = count;
-}
-
-function addToWishlist() {
-    let count = localStorage.getItem("wishlistCount") ? parseInt(localStorage.getItem("wishlistCount")) : 0;
-    count++; // Incrémenter
-
-    // Sauvegarder la nouvelle valeur
-    localStorage.setItem("wishlistCount", count);
-
-    // Recharger la page pour voir la mise à jour
-    location.reload();
-}
-
-// Exécuter initWishCounter après le chargement de la page
-document.addEventListener("DOMContentLoaded", initWishCounter);
-
-</script>
+		<link rel="shortcut icon" href="img/finallogo.png" type="image/x-icon">
+		<script src="script.js"></script>
+		
 		<!-- Google font -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
 
@@ -111,7 +88,7 @@ document.addEventListener("DOMContentLoaded", initWishCounter);
 						<!-- LOGO -->
 						<div class="col-md-3">
 							<div class="header-logo">
-								<a href="#" class="logo">
+								<a href="index.php" class="logo">
 									<img src="./img/finallogo.png" alt="" >
 								</a>
 							</div>
@@ -121,19 +98,22 @@ document.addEventListener("DOMContentLoaded", initWishCounter);
 						<!-- SEARCH BAR -->
 						<div class="col-md-6">
     <div class="header-search">
-        <form onsubmit="return false;">
+        <form action="search.php" method="post">
             <select class="input-select" id="category-select" onchange="redirectToPage()">
 				
                 <option value="store.php">All Categories</option>
-				<option value="store.php"><--Filter--></option>
-                <option value="">Stationery</option>
-                <option value="">Writ. & corr</option>
-                <option value="">Backpack</option>
+				<option value="Filtre.php"><--Filter--></option>
+                <option value="Stationery.php">Stationery</option>
+                <option value="Writ_corr.php">Writ. & corr</option>
+                <option value="Backpack.php">Backpack</option>
                 <option value="It_Multi.php">IT & Multim</option>
-                <option value="">Math & Geo</option>
+                <option value="math_geo.php">Math & Geo</option>
             </select>
-            <input class="input" placeholder="Search here">
-            <button class="search-btn">Search</button>
+            <input class="input" placeholder="Search here" name="recherche">
+            <button class="search-btn" name="search">Search</button>
+			
+
+
         </form>
     </div>
 </div>
@@ -155,66 +135,57 @@ function redirectToPage() {
 							<div class="header-ctn">
 								<!-- Wishlist -->
 								<div>
-									<a href="#">
+									<a href="wish_list.php">
 										<i class="fa fa-heart-o"></i>
 										<span>Your Wishlist</span>
-										<div class="qty"></div>
+										<div class="qtyt"><?php
+
+if (isset($_SESSION['id'])) {
+    $userId = $_SESSION['id'];
+
+    $stmt = $mysqli->prepare("SELECT COUNT(*) FROM wishlist WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($wishlistCount);
+    $stmt->fetch();
+    echo $wishlistCount;
+    $stmt->close();
+} else {
+    echo 0;
+}
+
+$mysqli->close();
+?>
+</div>
 									</a>
 								</div>
 								<!-- /Wishlist -->
 
 								<!-- Cart -->
-								<div class="dropdown">
-									<a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
-										<i class="fa fa-shopping-cart"></i>
-										<span>Your Cart</span>
-										<div class="qty">0</div>
-									</a>
-									<div class="cart-dropdown">
-										<div class="cart-list">
-											<div class="product-widget">
-												<div class="product-img">
-													<img src="./img/product01.png" alt="">
-												</div>
-												<div class="product-body">
-													<h3 class="product-name"><a href="#"></a></h3>
-													<h4 class="product-price"><span class="qty">1x</span>$xxx</h4>
-												</div>
-												<button class="delete"><i class="fa fa-close"></i></button>
-											</div>
+							<div class="dropdown">
+    <a class="dropdown-toggle" href="panier.php" aria-expanded="true">
+        <i class="fa fa-shopping-cart"></i>
+        <span>Your Cart</span>
+        <div class="qty1"><?php
+										include "connexion_base.php";
 
-											<div class="product-widget">
-												<div class="product-img">
-													<img src="./img/product02.png" alt="">
-												</div>
-												<div class="product-body">
-													<h3 class="product-name"><a href="#">product name goes here</a></h3>
-													<h4 class="product-price"><span class="qty">3x</span>$980.00</h4>
-												</div>
-												<button class="delete"><i class="fa fa-close"></i></button>
-											</div>
-										</div>
-										<div class="cart-summary">
-											<small>3 Item(s) selected</small>
-											<h5>SUBTOTAL: $2940.00</h5>
-										</div>
-										<div class="cart-btns">
-											<a href="#">View Cart</a>
-											<a href="#">Checkout  <i class="fa fa-arrow-circle-right"></i></a>
-										</div>
-									</div>
-								</div>
-								<!-- /Cart -->
+if (isset($_SESSION['id'])) {
+    $userId = $_SESSION['id'];
 
-								<!-- Menu Toogle -->
-								<div class="menu-toggle">
-									<a href="#">
-										<i class="fa fa-bars"></i>
-										<span>Menu</span>
-									</a>
-								</div>
-								<!-- /Menu Toogle -->
-							</div>
+    $stmt = $mysqli->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($wishlistCount);
+    $stmt->fetch();
+    echo $wishlistCount;
+    $stmt->close();
+} else {
+    echo 0;
+}
+?></div>
+    </a>
+</div>
+
 						</div>
 						<!-- /ACCOUNT -->
 					</div>
@@ -353,19 +324,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist" onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
 												
-													<button class="quick-view">
-														<a href="product.html"><i class="fa fa-eye"></i>
-														<span class="tooltipp">quick view</span>
-													</button></a>
-														
-												</div>
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -388,15 +349,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star-o"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist" onclick="addToWishlist()"><i class="fa fa-heart-o" ></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -414,15 +369,9 @@ function redirectToPage() {
 												<h4 class="product-price">2800dh <del class="product-old-price">3500dh</del></h4>
 												<div class="product-rating">
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -442,15 +391,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist" onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -470,15 +413,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 									</div>
@@ -541,15 +478,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+											
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -572,15 +503,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star-o"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
 												
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -598,15 +523,9 @@ function redirectToPage() {
 												<h4 class="product-price">150dh<del class="product-old-price"></del></h4>
 												<div class="product-rating">
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -626,15 +545,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													<button class="add-to-compare"><i class="fa fa-exchange"></i><span class="tooltipp">add to compare</span></button>
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+											
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+											
 										</div>
 										<!-- /product -->
 
@@ -654,15 +567,9 @@ function redirectToPage() {
 													<i class="fa fa-star"></i>
 													<i class="fa fa-star"></i>
 												</div>
-												<div class="product-btns">
-													<button class="add-to-wishlist"onclick="addToWishlist()"><i class="fa fa-heart-o"></i><span class="tooltipp">add to wishlist</span></button>
-													
-													<button class="quick-view"><i class="fa fa-eye"></i><span class="tooltipp">quick view</span></button>
-												</div>
+												
 											</div>
-											<div class="add-to-cart">
-												<button class="add-to-cart-btn"><i class="fa fa-shopping-cart"></i> add to cart</button>
-											</div>
+										
 										</div>
 										<!-- /product -->
 									</div>

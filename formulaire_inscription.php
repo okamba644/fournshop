@@ -72,7 +72,8 @@ if (isset($_POST["s'inscrire"])) {
     <title>Formulaire d'inscription</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="formulaire_inscri.css">
+    <link rel="stylesheet" href="formulaire_inscri.css
+    ">
 </head>
 <body>
 

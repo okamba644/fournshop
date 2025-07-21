@@ -4,6 +4,7 @@ session_start();
 
 
 
+
 ?>
 
 <!DOCTYPE html>
@@ -16,7 +17,6 @@ session_start();
 
 		<title>Fournishop</title>
 
-	
 		<!-- Google font -->
 		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
 
@@ -99,15 +99,16 @@ session_start();
         <form onsubmit="return false;">
             <select class="input-select" id="category-select" onchange="redirectToPage()">
 				
-              <option value="store.php">All Categories</option>
-				<option value="store.php"><--Filter--></option>
+            
+                <option value="store.php">All Categories</option>
+                <option value="store.php"><--Filter--></option>
                 <option value="Stationery.php">Stationery</option>
                 <option value="Writ_corr.php">Writ. & corr</option>
                 <option value="Backpack.php">Backpack</option>
                 <option value="It_Multi.php">IT & Multim</option>
                 <option value="math_geo.php">Math & Geo</option>
             </select>
-           <input class="input" placeholder="Search here" name="recherche">
+          <input class="input" placeholder="Search here" name="recherche">
             <button class="search-btn" name="search">Search</button>
         </form>
     </div>
@@ -133,7 +134,7 @@ function redirectToPage() {
 									<a href="wish_list.php">
 										<i class="fa fa-heart-o"></i>
 										<span>Your Wishlist</span>
-										<div class="qtyt"><?php
+										<div class="qty1"><?php
 
 if (isset($_SESSION['id'])) {
     $userId = $_SESSION['id'];
@@ -149,39 +150,19 @@ if (isset($_SESSION['id'])) {
     echo 0;
 }
 $mysqli->close();
-?>
-</div>
+?></div>
 									</a>
 								</div>
 								<!-- /Wishlist -->
 
 								<!-- Cart -->
 								<div class="dropdown">
-									<a class="dropdown-toggle" href="panier.php"  aria-expanded="true">
+									<a class="dropdown-toggle" data-toggle="dropdown" href="panier.php" aria-expanded="true">
 										<i class="fa fa-shopping-cart"></i>
 										<span>Your Cart</span>
-										<div class="qty1"><?php
-										include "connexion_base.php";
-
-if (isset($_SESSION['id'])) {
-    $userId = $_SESSION['id'];
-
-    $stmt = $mysqli->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $stmt->bind_result($wishlistCount);
-    $stmt->fetch();
-    echo $wishlistCount;
-    $stmt->close();
-} else {
-    echo 0;
-}
-?>
-</div>
+										<div class="qty1">0</div>
 									</a>
 									
-
-								
 							</div>
 						</div>
 						<!-- /ACCOUNT -->
@@ -194,13 +175,14 @@ if (isset($_SESSION['id'])) {
 		</header>
 		<!-- /HEADER -->
 
+
         <div class="section">
 	<div class="container">
 		<div class="row">
 			<?php
 			include("connexion_base.php");
 
-			$sql = "SELECT * FROM produits where categorie='IT & Multim' ORDER BY id DESC";
+			$sql = "SELECT * FROM produits  where categorie='Stationery' ORDER BY id DESC";
 			$result = $mysqli->query($sql);
 
 			if ($result->num_rows > 0) {
@@ -273,6 +255,12 @@ if (isset($_SESSION['id'])) {
 		</div>
 	</div>
 </div>
+
+
+
+
+
+
 
 
 		<!-- FOOTER -->
@@ -408,25 +396,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Erreur Ajax :', error);
                 alert('Erreur de communication avec le serveur.');
             });
-        });
-    });
-});
-</script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function () {
-    $('.ajout-panier-form').on('submit', function (e) {
-        e.preventDefault();
-
-        var form = $(this);
-        $.ajax({
-            type: 'POST',
-            url: 'ajout_panier.php',
-            data: form.serialize(),
-            success: function (response) {
-                // Affiche la réponse (alert JS depuis le PHP)
-                $('body').append(response);
-            }
         });
     });
 });

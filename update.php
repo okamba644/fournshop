@@ -43,7 +43,7 @@ if (isset($_POST['modifier'])) {
     }
 
     if (!empty($categorie)) {
-        $champs[] = "cattegorie = ?";
+        $champs[] = "categorie = ?";
         $params[] = $categorie;
         $types .= "s";
     }
